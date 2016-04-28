@@ -1,6 +1,7 @@
-package servlet;
+package com.tweetsmap.worker;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -15,22 +16,22 @@ import com.amazonaws.util.json.JSONUtils;
 
 public class WorkerServlet extends HttpServlet {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
+	
+	private final SNSHandler snsHandler;
 
 	public WorkerServlet() {
-		// TODO Auto-generated constructor stub
+		snsHandler = new SNSHandler();
 	}
 
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
 			throws ServletException, IOException {
-		String tweetString = IOUtils.toString(request.getInputStream());
 		try {
+			String tweetString = IOUtils.toString(request.getInputStream());
+			
 			JSONObject tweet = new JSONObject(tweetString);
 			//TODO sentiment test
-			//TODO send SNS msg
+			snsHandler.publish(tweet);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

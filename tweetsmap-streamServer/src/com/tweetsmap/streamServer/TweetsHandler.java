@@ -47,7 +47,7 @@ public class TweetsHandler {
 		listener = new StatusListener() {
             @Override
             public void onStatus(Status status) {
-                if (status.getGeoLocation() != null && status.getLang() != null && status.getLang().equals("English")) {
+                if (status.getGeoLocation() != null && status.getLang() != null && status.getLang().equals("en")) {
                     System.out.println("@" + status.getUser().getScreenName() + " - " + status.getText());
                 	tweetsCallBack.handleTweets(status);
                 }

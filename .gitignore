@@ -4,6 +4,7 @@ build/
 
 # Credentials #
 *.properties
+AwsUtils.java
 
 # Eclipse
 .settings/

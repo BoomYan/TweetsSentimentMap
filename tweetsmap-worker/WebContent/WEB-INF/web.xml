@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
   <servlet>
-    <display-name>WorkerServlet</display-name>
     <servlet-name>WorkerServlet</servlet-name>
-    <servlet-class>WorkerServlet</servlet-class>
+    <servlet-class>com.tweetsmap.worker.WorkerServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>WorkerServlet</servlet-name>
-    <url-pattern>/*</url-pattern>
+    <url-pattern>/processTweets</url-pattern>
   </servlet-mapping>
 </web-app>

@@ -8,7 +8,6 @@ public class ContextListener implements ServletContextListener {
 
 
 	public ContextListener() {
-
 	}
 
 	@Override
