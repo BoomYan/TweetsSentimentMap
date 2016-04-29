@@ -31,10 +31,9 @@ public class Initializer {
 		tweetsHandler = new TweetsHandler(new TweetsCallback() {
 			@Override
 			public void handleTweets(Status status) {
-				// TODO Auto-generated method stub
 				JSONObject obj = new JSONObject();
 				try {
-					obj.put("Text", status.getText());
+					obj.put("text", status.getText());
 					obj.put("location", ((Double) status.getGeoLocation().getLatitude()).toString() + ","
 							+ ((Double) status.getGeoLocation().getLongitude()).toString());
 					SQS_HANDLER.sendMessage(obj);
