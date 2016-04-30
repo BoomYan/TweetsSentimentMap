@@ -30,14 +30,12 @@ html, body {
 		</select>
 	</div>
 	<div>
-		<button type="button" onclick="openSocket();">Open
-			Connection</button>
+		<button type="button" onclick="openSocket();">Open Connection</button>
 		<button type="button" onclick="search();" value="@">Start
 			Tracking!</button>
 		<button type="button" onclick="searchNearAMarker();" value="@">Search
 			Near A Marker!</button>
-		<button type="button" onclick="closeSocket();">Stop
-			Tracking!</button>
+		<button type="button" onclick="closeSocket();">Stop Tracking!</button>
 	</div>
 	<!-- Server responses get written here -->
 	<div id="messages"></div>
@@ -49,129 +47,156 @@ html, body {
 		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAnYagsLl9_liiKrxaSqWA3wvAssLIy0nw&libraries=visualization&callback=initMap"></script>
 
 	<script type="text/javascript">
-            //handling websocket operations           
-            var webSocket;
-            var messages = document.getElementById("messages");
-                      
-            function openSocket(){
-                if(webSocket !== undefined && webSocket.readyState !== WebSocket.CLOSED){
-                   writeResponse("WebSocket is already opened.");
-                    return;
-                }
-                // Create a new instance of the websocket
-                if (location.host === "localhost:8080") {
-                	webSocket = new WebSocket("ws://"+ location.host + "/tweetsmap-backendServer/server");
-                }
-                else {
-                	webSocket = new WebSocket("ws://"+ location.host + ":8080/server");
-                }
+		//handling websocket operations           
+		var webSocket;
+		var messages = document.getElementById("messages");
 
-                webSocket.onopen = function(event){
-                    if(event.data === undefined)
-                        return;
-                    writeResponse(event.data);
-                };
- 
-                webSocket.onmessage = function(event){
-                    writeResponse(event.data);
-                    var response = JSON.parse(event.data);
-                    switch (response.command) {
-	                    case "searchResponse": 
-	                    	var loc = response.tweet.location;
-	                    	var latlng = String(loc).split(",");
-	                    	addPoint(new google.maps.LatLng(latlng[0], latlng[1]));
-	                    	break;
-	                    case "newlyIndexedTweet":
-	                    	writeResponse("A new tweet is indexed: " + response.tweet.text);
-	                    	break;
-	                    default:
-	                    	writeResponse(response.command);
-                    }
-                };
- 
-                webSocket.onclose = function(event){
-                    writeResponse("Connection closed");
-                };
-            }
-            openSocket();
-            /**
-             * Sends the value of the text input to the server
-             */
-            function sendMessage(msg) {
-                webSocket.send(msg);
-                removeAllPoints();
-            }
-            function search() {
-            	var msg = {};
-            	msg.command = "getTweets";
-            	msg.query = getText();
-            	sendMessage(JSON.stringify(msg));            	
-            }
-            function searchNearAMarker() {
-            	var msg = {};
-            	msg.command = "getTweets";
-            	msg.query = getText();
-            	msg.location = marker.getPosition().lat() + "," +  marker.getPosition().lng();
-            	sendMessage(JSON.stringify(msg));
-            }
-           
-            function closeSocket(){
-                webSocket.close();
-            }
- 			function getText() {
- 				var text = document.getElementById("messageinput").value;
- 				return text;
- 			}
-            function writeResponse(text){
-                messages.innerHTML = "<br/>" + text;
-                messages.innerHTML += "<br/>" + "Count:" + points.length;
-            }
-           
-        	//handling map operations
-        	var points = new google.maps.MVCArray([]);
-        	var map;
-        	var heatmap;
-        	var marker;
-            function initMap() {
-            	var sanFrancisco = new google.maps.LatLng(37.774546, -122.433523);
-            	
-                map = new google.maps.Map(document.getElementById('map'), {
-                	center: sanFrancisco,
-                	zoom: 3,
-                });
-                
-                marker = new google.maps.Marker({
-                    position: sanFrancisco,
-                    map: map
-                });
-                
-                google.maps.event.addListener(map, 'click', function(event){
-                	  marker.setPosition(event.latLng);
-                });
-                
-                //points.push(sanFrancisco); 
-                
-                heatmap = new google.maps.visualization.HeatmapLayer({
-                	  data: points,
-                	  radius: 50
-                });
-                
-                heatmap.setMap(map);
-                
-/* 				addPoint(new google.maps.LatLng(37.782, -122.447)); */
-            }
-            function addPoint(latlon) {
-            	points.push(latlon);
-            }
-            function removePoint() {
-            	points.shift();
-            }
-            function removeAllPoints() {
-            	points.clear();
-            }
-        </script>
+		function openSocket() {
+			if (webSocket !== undefined
+					&& webSocket.readyState !== WebSocket.CLOSED) {
+				writeResponse("WebSocket is already opened.");
+				return;
+			}
+			// Create a new instance of the websocket
+			if (location.host === "localhost:8080") {
+				webSocket = new WebSocket("ws://" + location.host
+						+ "/tweetsmap-backendServer/server");
+			} else {
+				webSocket = new WebSocket("ws://" + location.host
+						+ ":8080/server");
+			}
+
+			webSocket.onopen = function(event) {
+				if (event.data === undefined)
+					return;
+				writeResponse(event.data);
+			};
+
+			webSocket.onmessage = function(event) {
+				var response = JSON.parse(event.data);
+				switch (response.command) {
+				case "searchResponse":
+					var loc = response.tweet.location;
+					var latlng = String(loc).split(",");
+					addPoint(new google.maps.LatLng(latlng[0], latlng[1]), response.tweet.sentiment);
+					break;
+				case "newlyIndexedTweet":
+					writeResponse("A new tweet is indexed: "
+							+ response.tweet.text);
+					break;
+				default:
+					writeResponse(response.command);
+				}
+			};
+
+			webSocket.onclose = function(event) {
+				writeResponse("Connection closed");
+			};
+		}
+		openSocket();
+		/**
+		 * Sends the value of the text input to the server
+		 */
+		function sendMessage(msg) {
+			webSocket.send(msg);
+			removeAllPoints();
+		}
+		function search() {
+			var msg = {};
+			msg.command = "getTweets";
+			msg.query = getText();
+			sendMessage(JSON.stringify(msg));
+		}
+		function searchNearAMarker() {
+			var msg = {};
+			msg.command = "getTweets";
+			msg.query = getText();
+			msg.location = searchMarker.getPosition().lat() + ","
+					+ searchMarker.getPosition().lng();
+			sendMessage(JSON.stringify(msg));
+		}
+
+		function closeSocket() {
+			webSocket.close();
+		}
+		function getText() {
+			var text = document.getElementById("messageinput").value;
+			return text;
+		}
+		function writeResponse(text) {
+			messages.innerHTML = "<br/>" + text;
+			messages.innerHTML += "<br/>" + "Count:" + points.length;
+		}
+
+		//handling map operations
+		var points = new google.maps.MVCArray([]);
+		var markers = [];
+		var map;
+		var heatmap;
+		var searchMarker;
+		function initMap() {
+			var sanFrancisco = new google.maps.LatLng(37.774546, -122.433523);
+
+			map = new google.maps.Map(document.getElementById('map'), {
+				center : sanFrancisco,
+				zoom : 3,
+			});
+
+			searchMarker = new google.maps.Marker({
+				position : sanFrancisco,
+				map : map
+			});
+
+			google.maps.event.addListener(map, 'click', function(event) {
+				searchMarker.setPosition(event.latLng);
+			});
+
+			//points.push(sanFrancisco); 
+
+			heatmap = new google.maps.visualization.HeatmapLayer({
+				data : points,
+				radius : 50
+			});
+
+			heatmap.setMap(map);
+
+			/* 				addPoint(new google.maps.LatLng(37.782, -122.447)); */
+		}
+		function addPoint(latlng, sentiment) {
+			var iconUrl = "";
+			switch (sentiment) {
+				case 1 : iconUrl = "./images/positive.png";
+					break;
+				case 0 : iconUrl = "./images/neutral.png";
+					break;
+				default : iconUrl = "./images/negative.png";
+					break;
+			}
+			var newMarker = new google.maps.Marker({
+				position : latlng,
+			    icon: {
+			        url: iconUrl,
+			        scaledSize: new google.maps.Size(32, 32) // pixels
+			    },
+				map : map
+			})
+			markers.push(newMarker);
+			points.push(latlng);
+		}
+		function removeAllPoints() {
+			points.clear();
+			setMapOnAll(null);
+			markers = [];
+		}
+		function setMapOnAll(map) {
+			for (var i = 0; i < markers.length; i++) {
+				markers[i].setMap(map);
+			}
+		}
+	</script>
 	<script>
-        </script>
+		
+	</script>
 
 </body>
 </html>

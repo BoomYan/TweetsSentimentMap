@@ -36,8 +36,9 @@ public class Server {
         System.out.println(session.getId() + " has opened a connection"); 
         sessionMap.put(session, "");
         try {
-            session.getBasicRemote().sendText("Connection Established");
-        } catch (IOException ex) {
+        	JSONObject msg = new JSONObject().put(COMMAND, "Connection Established");
+        	sendMessageToASession(session, msg);
+        } catch (JSONException ex) {
             ex.printStackTrace();
         }
     }
