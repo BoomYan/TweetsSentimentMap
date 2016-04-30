@@ -28,8 +28,8 @@ public class ElasticSearchHandler {
 		return searchTweets(queryObject);
 	}
 
-	public static JSONArray searchTweetsByLocation(String queryString, String lat, String lon) throws JSONException{
-		JSONObject queryObject = addMaxSize(generateQueryJSONObject(queryString, lat, lon));
+	public static JSONArray searchTweetsByLocation(String queryString, String lat, String lng) throws JSONException{
+		JSONObject queryObject = addMaxSize(generateQueryJSONObject(queryString, lat, lng));
 		return searchTweets(queryObject);
 	}
 	
@@ -79,11 +79,11 @@ public class ElasticSearchHandler {
 //		    }
 //		  }
 //		}'
-	public static JSONObject generateQueryJSONObject(String queryString, String lat, String lon) throws JSONException {
+	private static JSONObject generateQueryJSONObject(String queryString, String lat, String lng) throws JSONException {
 		JSONObject innerQuery = generateQueryJSONObject(queryString);
 		JSONObject location = new JSONObject();
 		location.put("lat", lat);
-		location.put("lon", lon);
+		location.put("lon", lng);
 		JSONObject geoDistance = new JSONObject();
 		geoDistance.put("distance", DISTANCE);
 		geoDistance.put("location", location);

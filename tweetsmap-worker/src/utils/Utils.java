@@ -1,15 +1,14 @@
 package utils;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
+import java.util.Iterator;
+
+import com.amazonaws.util.json.JSONArray;
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
 import com.github.kevinsawicki.http.HttpRequest;
 
 public class Utils {
-	
-	private static final JSONParser JSON_PARSER = new JSONParser();
 
 	// link several strings to one string
 	public static String buildURL(String... strings) {
@@ -20,43 +19,51 @@ public class Utils {
 		return sb.toString();
 	}
 
-	public static JSONObject getJSONObject(JSONObject jsonObject, String key) throws ParseException {
-		return (JSONObject) JSON_PARSER.parse(jsonObject.get(key).toString());
+	public static JSONObject getJSONObject(JSONObject jsonObject, String key) throws JSONException{
+		String objStr = jsonObject.getString(key);
+		return new JSONObject(objStr);
 	}
 
-	public static JSONObject getJSONObject(JSONArray jsonArray, int index) {
-		return (JSONObject) jsonArray.get(index);
+	public static JSONObject getJSONObject(JSONArray jsonArray, int index) throws JSONException {
+		return jsonArray.getJSONObject(index);
 	}
 
-	public static JSONArray getJSONArray(JSONObject jsonObject, String key) {
-		return (JSONArray) jsonObject.get(key);
+	public static JSONArray getJSONArray(JSONObject jsonObject, String key) throws JSONException {
+		return jsonObject.getJSONArray(key);
 	}
 	
-	public static JSONObject ObjectToJSONObject(Object obj) throws ParseException {
-		return (JSONObject) JSON_PARSER.parse(obj.toString());
+	//put b into a
+	public static void putAll(JSONObject aObj, JSONObject bObj) throws JSONException {
+		@SuppressWarnings("rawtypes")
+		Iterator keys = bObj.keys();
+		while (keys.hasNext()) {
+			String key = (String) keys.next();
+			aObj.put(key, bObj.get(key));
+		}
+		
 	}
 	
 	// take get http url and return response object as JSONObject
-	public static JSONObject sendGetRequest(String url) throws ParseException{
+	public static JSONObject sendGetRequest(String url) throws JSONException{
 		HttpRequest res = HttpRequest.get(url);
 		return handleResponse(res, url);
 	}
 	
-	public static JSONObject sendGetRequest(String url, CharSequence data) throws ParseException{
+	public static JSONObject sendGetRequest(String url, CharSequence data) throws JSONException{
 		HttpRequest res = HttpRequest.get(url).send(data);
 		return handleResponse(res, url);
 	}
 	
-	public static JSONObject sendPutRequest(String url, CharSequence data) throws ParseException {
+	public static JSONObject sendPutRequest(String url, CharSequence data) throws JSONException{
 		HttpRequest res = HttpRequest.put(url).send(data);
 		return handleResponse(res, url);
 	}
 	
-	private static JSONObject handleResponse(HttpRequest res, String url) throws ParseException {
+	private static JSONObject handleResponse(HttpRequest res, String url) throws JSONException{
 		if (res.badRequest()) {
-			throw new IllegalArgumentException("Invalid URL:" + url);
+			throw new IllegalArgumentException(res.body());
 		}
 		String response = res.body();
-		return (JSONObject) JSON_PARSER.parse(response);
+		return new JSONObject(response);
 	}
 }

@@ -1,12 +1,12 @@
 package com.tweetsmap.worker;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
-
 import utils.Utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
 
 public class AlchemySentimentAnalysisHandler {
 
@@ -17,7 +17,6 @@ public class AlchemySentimentAnalysisHandler {
 			String encodedText = URLEncoder.encode(text, "UTF-8");
 			String url = Utils.buildURL(apiEndpoint, encodedText);
 			JSONObject response = Utils.sendGetRequest(url);
-			System.out.println(response);
 			String type = Utils.getJSONObject(response, "docSentiment").get("type").toString();
 			switch (type) {
 				case "positive":
@@ -29,7 +28,7 @@ public class AlchemySentimentAnalysisHandler {
 				default:
 					return 0;
 			}
-		} catch (UnsupportedEncodingException | ParseException e) {
+		} catch (UnsupportedEncodingException | JSONException e) {
 			e.printStackTrace();
 			throw new RuntimeException(e.getMessage());
 		}

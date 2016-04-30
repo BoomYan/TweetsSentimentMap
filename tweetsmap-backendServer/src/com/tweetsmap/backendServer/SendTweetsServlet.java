@@ -25,7 +25,6 @@ public class SendTweetsServlet extends HttpServlet {
 		String requestBody = IOUtils.toString(request.getInputStream());
 		if (requestBody != null) {
 			//get tweets
-			System.out.printf("Request Body: %s%n", requestBody);
 			JSONObject tweetObject = new JSONObject();
 			try {
 				JSONObject requestBodyObject = new JSONObject(requestBody);

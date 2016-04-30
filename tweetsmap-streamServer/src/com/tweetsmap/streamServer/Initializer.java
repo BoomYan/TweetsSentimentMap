@@ -27,7 +27,6 @@ public class Initializer {
 	}
 
 	public static void startTrackingTweets() {
-		System.out.println("initialized");
 		tweetsHandler = new TweetsHandler(new TweetsCallback() {
 			@Override
 			public void handleTweets(Status status) {
@@ -36,6 +35,7 @@ public class Initializer {
 					obj.put("text", status.getText());
 					obj.put("location", ((Double) status.getGeoLocation().getLatitude()).toString() + ","
 							+ ((Double) status.getGeoLocation().getLongitude()).toString());
+					obj.put("user", status.getUser().getName());
 					SQS_HANDLER.sendMessage(obj);
 				} catch (JSONException e) {
 					e.printStackTrace();

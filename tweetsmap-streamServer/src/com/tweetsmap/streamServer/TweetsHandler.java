@@ -18,13 +18,13 @@ public class TweetsHandler {
 		void handleTweets(Status status);
 	}
 	
-	private static boolean isRemote = false;
+	private static boolean isRemote = true;
 	
-	private TwitterStream twitterStream;
+	private final TwitterStream twitterStream;
 	
-	private StatusListener listener;
+	private final StatusListener listener;
 
-	public TweetsHandler(final TweetsCallback tweetsCallBack) {
+	public TweetsHandler(final TweetsCallback tweetsCallback) {
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		if (isRemote) {
 			//for remote server
@@ -49,7 +49,7 @@ public class TweetsHandler {
             public void onStatus(Status status) {
                 if (status.getGeoLocation() != null && status.getLang() != null && status.getLang().equals("en")) {
                     System.out.println("@" + status.getUser().getScreenName() + " - " + status.getText());
-                	tweetsCallBack.handleTweets(status);
+                	tweetsCallback.handleTweets(status);
                 }
             }
 
@@ -60,7 +60,7 @@ public class TweetsHandler {
 
             @Override
             public void onTrackLimitationNotice(int numberOfLimitedStatuses) {
-                //System.out.println("Got track limitation notice:" + numberOfLimitedStatuses);
+                System.out.println("Got track limitation notice:" + numberOfLimitedStatuses);
             }
 
             @Override
@@ -87,7 +87,6 @@ public class TweetsHandler {
 	}
 	
 	public void setTrackingAndStart(String... wordArray) {
-		//wordArray[wordArray.length - 1] = "@";
 		FilterQuery query = new FilterQuery();
 		query.track(wordArray);
 		twitterStream.filter(query);		
