@@ -7,42 +7,40 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
 import com.amazonaws.util.IOUtils;
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
+
 import utils.Utils;
 
 
-public class BackendServerServlet extends HttpServlet {
-	
-	private static final JSONParser JSON_PARSER = new JSONParser();
+public class SendTweetsServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
 	
 	//receive post request from SNS
+	//and send tweets to elasticsearch and all sections
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
 			throws ServletException, IOException {
 		String requestBody = IOUtils.toString(request.getInputStream());
 		if (requestBody != null) {
 			//get tweets
+			System.out.printf("Request Body: %s%n", requestBody);
 			JSONObject tweetObject = new JSONObject();
 			try {
-				JSONObject requestBodyObject = (JSONObject) JSON_PARSER.parse(requestBody);
+				JSONObject requestBodyObject = new JSONObject(requestBody);
 				tweetObject = Utils.getJSONObject(requestBodyObject, "Message");
-			} catch (ParseException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				response.setStatus(400);
 				return;
 			}
 			try {
-				ElasticSearchHandler.sendATweet(tweetObject);
-			} catch (ParseException e) {
+				Server.onNewTweet(tweetObject);
+			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 			response.setStatus(200);
-			//TODO send to all current session
 		}
 		
 	}

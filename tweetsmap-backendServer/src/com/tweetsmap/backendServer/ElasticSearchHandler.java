@@ -1,8 +1,10 @@
 package com.tweetsmap.backendServer;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
+
+import com.amazonaws.util.json.JSONArray;
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
+
 import utils.Utils;
 
 public class ElasticSearchHandler {
@@ -13,39 +15,43 @@ public class ElasticSearchHandler {
 	private static final String SEARCH = "/_search";
 	private static final String SLASH = "/";
 	private static final String DISTANCE = "1000km";
+	private static final Integer MAX_SIZE_RETURN = 2000; 
 
-	public static JSONObject sendATweet(JSONObject tweetObject) throws ParseException {
+	public static JSONObject sendATweet(JSONObject tweetObject) throws JSONException{
 		String url = Utils.buildURL(SERVER_ENDPOINT, INDEX, TWEET, SLASH, ((Integer) tweetObject.hashCode()).toString());
 		JSONObject res = Utils.sendPutRequest(url, tweetObject.toString());
 		return res;
 	}
 
-	public static JSONArray searchTweets(String queryString) throws ParseException {
-		JSONObject queryObject = generateQueryJSONObject(queryString);
+	public static JSONArray searchTweets(String queryString) throws JSONException{
+		JSONObject queryObject = addMaxSize(generateQueryJSONObject(queryString));
 		return searchTweets(queryObject);
 	}
 
-	public static JSONArray searchTweetsByLocation(String queryString, String lat, String lon) throws ParseException {
-		JSONObject queryObject = generateQueryJSONObject(queryString, lat, lon);
+	public static JSONArray searchTweetsByLocation(String queryString, String lat, String lon) throws JSONException{
+		JSONObject queryObject = addMaxSize(generateQueryJSONObject(queryString, lat, lon));
 		return searchTweets(queryObject);
 	}
+	
+	private static JSONObject addMaxSize(JSONObject obj) throws JSONException {
+		obj.put("size", MAX_SIZE_RETURN);
+		return obj;
+	}
 
-	@SuppressWarnings("unchecked")
-	private static JSONArray searchTweets(JSONObject queryObject) throws ParseException {
+	private static JSONArray searchTweets(JSONObject queryObject) throws JSONException{
 		String url = Utils.buildURL(SERVER_ENDPOINT, INDEX, TWEET, SEARCH);
 		JSONObject res = Utils.sendGetRequest(url, queryObject.toString());
 		JSONArray hits = Utils.getJSONArray(Utils.getJSONObject(res, "hits"), "hits");
 		JSONArray result = new JSONArray();
-		for (int i = 0; i < hits.size(); i++) {
+		for (int i = 0; i < hits.length(); i++) {
 			JSONObject tweet = Utils.getJSONObject(Utils.getJSONObject(hits, i), "_source");
-			result.add(tweet);
+			result.put(tweet);
 		}
 		return result;
 	}
 
 	// '{"query": {"match": {"message": "testText"}}}'
-	@SuppressWarnings("unchecked")
-	private static JSONObject generateQueryJSONObject(String queryString) {
+	private static JSONObject generateQueryJSONObject(String queryString) throws JSONException {
 		JSONObject query = new JSONObject();
 		JSONObject queryContents = new JSONObject();
 		JSONObject match = new JSONObject();
@@ -73,8 +79,7 @@ public class ElasticSearchHandler {
 //		    }
 //		  }
 //		}'
-	@SuppressWarnings("unchecked")
-	public static JSONObject generateQueryJSONObject(String queryString, String lat, String lon) {
+	public static JSONObject generateQueryJSONObject(String queryString, String lat, String lon) throws JSONException {
 		JSONObject innerQuery = generateQueryJSONObject(queryString);
 		JSONObject location = new JSONObject();
 		location.put("lat", lat);
@@ -85,7 +90,7 @@ public class ElasticSearchHandler {
 		JSONObject filter = new JSONObject();
 		filter.put("geo_distance", geoDistance);
 		JSONObject filtered = new JSONObject();
-		filtered.putAll(innerQuery);
+		Utils.putAll(filtered, innerQuery);
 		filtered.put("filter", filter);
 		JSONObject query = new JSONObject();
 		query.put("filtered", filtered);

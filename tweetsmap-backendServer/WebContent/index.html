@@ -1,90 +1,177 @@
 <!DOCTYPE html>
+
 <html>
-  <head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <title>Hello AWS Web World!</title>
-    <link rel="stylesheet" href="styles/styles.css" type="text/css" media="screen">
-  </head>
-  <body>
-    <div id="content" class="container">
+<head>
+<title>Tweets Map by Jiaming Yan</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<style>
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
 
-      <div style="height: 10px;"> </div>
+#map {
+	height: 100%;
+}
+</style>
+</head>
+<body>
 
-      <h3>AWS Java Web Project</h3>
-      <p>
-      Welcome to your new AWS Java Web Project! This project template gives you
-      basic a starting point for creating a web application on AWS.
-      </p>
+	<div>
+		<select id="messageinput">
+			<option value="" disabled="disabled" selected="selected">Please
+				select a candidate to track</option>
+			<option value="trump">Donald Trump</option>
+			<option value="cruz">Ted Cruz</option>
+			<option value="clinton">Hillary Clinton</option>
+			<option value="sanders">Bernie Sanders</option>
+		</select>
+	</div>
+	<div>
+		<button type="button" onclick="openSocket();">Open
+			Connection</button>
+		<button type="button" onclick="search();" value="@">Start
+			Tracking!</button>
+		<button type="button" onclick="searchNearAMarker();" value="@">Search
+			Near A Marker!</button>
+		<button type="button" onclick="closeSocket();">Stop
+			Tracking!</button>
+	</div>
+	<!-- Server responses get written here -->
+	<div id="messages"></div>
+	<div id="map"></div>
 
-      <h4>Contents of this Project</h4>
+	<!-- Script to utilise the WebSocket -->
+	<script src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+	<script async defer
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAnYagsLl9_liiKrxaSqWA3wvAssLIy0nw&libraries=visualization&callback=initMap"></script>
 
-      <p>
-      This page is rendered from <b>WebContent/index.html</b> - a simple static
-      HTML page. Any static content in the WebContent folder will be accessible
-      from the equivalent path in your web application (for example,
-      https://your-app-93s2kypa5y.elasticbeanstalk.com/index.html).
-      </p>
+	<script type="text/javascript">
+            //handling websocket operations           
+            var webSocket;
+            var messages = document.getElementById("messages");
+                      
+            function openSocket(){
+                if(webSocket !== undefined && webSocket.readyState !== WebSocket.CLOSED){
+                   writeResponse("WebSocket is already opened.");
+                    return;
+                }
+                // Create a new instance of the websocket
+                if (location.host === "localhost:8080") {
+                	webSocket = new WebSocket("ws://"+ location.host + "/tweetsmap-backendServer/server");
+                }
+                else {
+                	webSocket = new WebSocket("ws://"+ location.host + ":8080/server");
+                }
 
-      <p>
-      Any <a href="https://jsp.java.net/">JSP</a> files in the WebContent folder
-      will be processed dynamically to generate HTML pages. For example, the
-      <a href="index.jsp">index.jsp</a> file renders a simple page that displays
-      a list of any <a href="http://aws.amazon.com/s3/">Amazon S3</a> Buckets,
-      <a href="http://aws.amazon.com/dynamodb/">Amazon DynamoDB</a> Tables,
-      and <a href="http://aws.amazon.com/ec2/">Amazon EC2</a> Instances currently
-      associated with your AWS account.
-      </p>
+                webSocket.onopen = function(event){
+                    if(event.data === undefined)
+                        return;
+                    writeResponse(event.data);
+                };
+ 
+                webSocket.onmessage = function(event){
+                    writeResponse(event.data);
+                    var response = JSON.parse(event.data);
+                    switch (response.command) {
+	                    case "searchResponse": 
+	                    	var loc = response.tweet.location;
+	                    	var latlng = String(loc).split(",");
+	                    	addPoint(new google.maps.LatLng(latlng[0], latlng[1]));
+	                    	break;
+	                    case "newlyIndexedTweet":
+	                    	writeResponse("A new tweet is indexed: " + response.tweet.text);
+	                    	break;
+	                    default:
+	                    	writeResponse(response.command);
+                    }
+                };
+ 
+                webSocket.onclose = function(event){
+                    writeResponse("Connection closed");
+                };
+            }
+            openSocket();
+            /**
+             * Sends the value of the text input to the server
+             */
+            function sendMessage(msg) {
+                webSocket.send(msg);
+                removeAllPoints();
+            }
+            function search() {
+            	var msg = {};
+            	msg.command = "getTweets";
+            	msg.query = getText();
+            	sendMessage(JSON.stringify(msg));            	
+            }
+            function searchNearAMarker() {
+            	var msg = {};
+            	msg.command = "getTweets";
+            	msg.query = getText();
+            	msg.location = marker.getPosition().lat() + "," +  marker.getPosition().lng();
+            	sendMessage(JSON.stringify(msg));
+            }
+           
+            function closeSocket(){
+                webSocket.close();
+            }
+ 			function getText() {
+ 				var text = document.getElementById("messageinput").value;
+ 				return text;
+ 			}
+            function writeResponse(text){
+                messages.innerHTML = "<br/>" + text;
+                messages.innerHTML += "<br/>" + "Count:" + points.length;
+            }
+           
+        	//handling map operations
+        	var points = new google.maps.MVCArray([]);
+        	var map;
+        	var heatmap;
+        	var marker;
+            function initMap() {
+            	var sanFrancisco = new google.maps.LatLng(37.774546, -122.433523);
+            	
+                map = new google.maps.Map(document.getElementById('map'), {
+                	center: sanFrancisco,
+                	zoom: 3,
+                });
+                
+                marker = new google.maps.Marker({
+                    position: sanFrancisco,
+                    map: map
+                });
+                
+                google.maps.event.addListener(map, 'click', function(event){
+                	  marker.setPosition(event.latLng);
+                });
+                
+                //points.push(sanFrancisco); 
+                
+                heatmap = new google.maps.visualization.HeatmapLayer({
+                	  data: points,
+                	  radius: 50
+                });
+                
+                heatmap.setMap(map);
+                
+/* 				addPoint(new google.maps.LatLng(37.782, -122.447)); */
+            }
+            function addPoint(latlon) {
+            	points.push(latlon);
+            }
+            function removePoint() {
+            	points.shift();
+            }
+            function removeAllPoints() {
+            	points.clear();
+            }
+        </script>
+	<script>
+        </script>
 
-      <h4>Deploying this Project Locally</h4>
-
-      <p>
-      If you have a local installation of <a href="http://tomcat.apache.org/">
-      Apache Tomcat</a>, you can deploy this project to it for local testing
-      using the standard Eclipse Web Tools Platform integration with Tomcat.
-      </p>
-
-      <ul>
-        <li>Right/control click on this project in the Project Explorer</li>
-        <li>Choose Run As, then Run on Server</li>
-        <li>Select the option to manually define a new server</li>
-        <li>Expand the Apache folder, then select an appropriate version of Tomcat</li>
-        <li>Point Eclipse at your local Tomcat installation and click Finish</li>
-      </ul>
-
-      <p>
-      This page will open up, now served by your local Tomcat installation.
-      </p>
-
-      <h4>Deploying the Project to AWS Elastic Beanstalk</h4>
-
-      <p>
-      <a href="http://aws.amazon.com/elasticbeanstalk/">AWS Elastic Beanstalk</a>
-      is the quickest and easiest way to deploy an AWS Java Web Project to the
-      cloud. To deploy this project to AWS Elastic Beanstalk:
-      </p>
-
-      <ul>
-        <li>Right/control click on this project in the Project Explorer</li>
-        <li>Choose run As, then Run on Server</li>
-        <li>Select the option to manually define a new server</li>
-        <li>Expand the Amazon Web Services folder, then select an appropriate version of Tomcat</li>
-        <li>Select the AWS region where your application will be hosted</li>
-        <li>Provide a name for your application and environment and click Finish</li>
-      </ul>
-
-      <p>
-      Your project will be uploaded to AWS Elastic Beanstalk, which will
-      provision infrastructure to host your application and deploy your code
-      to it. When it's finished, you will again see this page open up, now hosted
-      in the cloud!
-      </p>
-
-      <p>
-      For more information about working with AWS Elastic Beanstalk, refer to the
-      <a href="http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_Java.html">
-      AWS Elastic Beanstalk Developer Guide</a>.
-      </p>
-
-    </div>
-  </body>
+</body>
 </html>
