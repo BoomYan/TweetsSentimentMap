@@ -76,12 +76,11 @@ html, body {
 				var response = JSON.parse(event.data);
 				switch (response.command) {
 				case "searchResponse":
-					var loc = response.tweet.location;
-					var latlng = String(loc).split(",");
-					addPoint(new google.maps.LatLng(latlng[0], latlng[1]), response.tweet.sentiment);
+					addPoint(response.tweet);
+					writeResponse("Searched Tweets Count: " + points.length);
 					break;
 				case "newlyIndexedTweet":
-					writeResponse("A new tweet is indexed: "
+					writeResponse("A newly indexed tweet: "
 							+ response.tweet.text);
 					break;
 				default:
@@ -125,7 +124,6 @@ html, body {
 		}
 		function writeResponse(text) {
 			messages.innerHTML = "<br/>" + text;
-			messages.innerHTML += "<br/>" + "Count:" + points.length;
 		}
 
 		//handling map operations
@@ -162,24 +160,39 @@ html, body {
 
 			/* 				addPoint(new google.maps.LatLng(37.782, -122.447)); */
 		}
-		function addPoint(latlng, sentiment) {
+		var prevInfoWindow;
+		function addPoint(tweet) {
+			var latlng = locationToGoogleLatlng(tweet.location);
+			var infoWindow = new google.maps.InfoWindow({
+				content : tweet.text
+			});
 			var iconUrl = "";
-			switch (sentiment) {
-				case 1 : iconUrl = "./images/positive.png";
-					break;
-				case 0 : iconUrl = "./images/neutral.png";
-					break;
-				default : iconUrl = "./images/negative.png";
-					break;
+			switch (tweet.sentiment) {
+			case 1:
+				iconUrl = "./images/positive.png";
+				break;
+			case 0:
+				iconUrl = "./images/neutral.png";
+				break;
+			default:
+				iconUrl = "./images/negative.png";
+				break;
 			}
 			var newMarker = new google.maps.Marker({
 				position : latlng,
-			    icon: {
-			        url: iconUrl,
-			        scaledSize: new google.maps.Size(32, 32) // pixels
-			    },
+				icon : {
+					url : iconUrl,
+					scaledSize : new google.maps.Size(32, 32)
+				},
 				map : map
 			})
+			newMarker.addListener('click', function() {
+				if (prevInfoWindow != undefined) {
+					prevInfoWindow.close();
+				}
+				infoWindow.open(map, newMarker);
+				prevInfoWindow = infoWindow;
+			});
 			markers.push(newMarker);
 			points.push(latlng);
 		}
@@ -192,6 +205,10 @@ html, body {
 			for (var i = 0; i < markers.length; i++) {
 				markers[i].setMap(map);
 			}
+		}
+		function locationToGoogleLatlng(location) {
+			var latlng = String(location).split(",");
+			return new google.maps.LatLng(latlng[0], latlng[1]);
 		}
 	</script>
 	<script>
