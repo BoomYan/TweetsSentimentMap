@@ -80,7 +80,7 @@ html, body {
 					writeResponse("Searched Tweets Count: " + points.length);
 					break;
 				case "newlyIndexedTweet":
-					writeResponse("A newly indexed tweet: "
+					alert("A newly indexed tweet: "
 							+ response.tweet.text);
 					break;
 				default:
@@ -167,22 +167,24 @@ html, body {
 				content : tweet.text
 			});
 			var iconUrl = "";
-			switch (tweet.sentiment) {
-			case 1:
+			var sentimentScore = Number(tweet.sentiment);
+			var size = 16 + Math.abs(sentimentScore) * 32;
+			if (sentimentScore > 0) {
 				iconUrl = "./images/positive.png";
-				break;
-			case 0:
-				iconUrl = "./images/neutral.png";
-				break;
-			default:
-				iconUrl = "./images/negative.png";
-				break;
 			}
+			else if (sentimentScore < 0){
+				iconUrl = "./images/negative.png";
+			}
+			else {
+				iconUrl = "./images/neutral.png";
+				size = 32;
+			}
+			
 			var newMarker = new google.maps.Marker({
 				position : latlng,
 				icon : {
 					url : iconUrl,
-					scaledSize : new google.maps.Size(32, 32)
+					scaledSize : new google.maps.Size(size, size)
 				},
 				map : map
 			})

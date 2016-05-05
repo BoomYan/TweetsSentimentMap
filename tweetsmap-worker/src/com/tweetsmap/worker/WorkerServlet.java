@@ -25,7 +25,7 @@ public class WorkerServlet extends HttpServlet {
 		try {
 			String tweetString = IOUtils.toString(request.getInputStream());
 			JSONObject tweet = new JSONObject(tweetString);
-			int sentiment = AlchemySentimentAnalysisHandler.analyzeAText(tweet.getString("text"));
+			float sentiment = AlchemySentimentAnalysisHandler.analyzeAText(tweet.getString("text"));
 			tweet.put("sentiment", sentiment);
 			snsHandler.publish(tweet);
 		} catch (Exception e) {

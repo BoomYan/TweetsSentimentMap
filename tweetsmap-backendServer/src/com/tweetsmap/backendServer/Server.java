@@ -16,7 +16,7 @@ import com.amazonaws.util.json.JSONObject;
 /*
  * pushing commands
  * - searchResponse - for search request, with a tweet object(text, location, sentiment)
- * - newlyIndexedTweet - for newly indexed tweets, with a tweet object(text, location, sentiment)
+ * - newlyIndexedTweet - for newly indexed tweets, with a tweet object(text, location, sentiment, user)
  * - other commands - message to shown on server
  * 
  * receiving commands

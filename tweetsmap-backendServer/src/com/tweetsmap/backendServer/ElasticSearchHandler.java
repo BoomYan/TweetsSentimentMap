@@ -18,7 +18,7 @@ public class ElasticSearchHandler {
 	private static final Integer MAX_SIZE_RETURN = 2000; 
 
 	public static JSONObject sendATweet(JSONObject tweetObject) throws JSONException{
-		String url = Utils.buildURL(SERVER_ENDPOINT, INDEX, TWEET, SLASH, ((Integer) tweetObject.hashCode()).toString());
+		String url = Utils.buildURL(SERVER_ENDPOINT, INDEX, TWEET, SLASH, ((Long) tweetObject.get("id")).toString());
 		JSONObject res = Utils.sendPutRequest(url, tweetObject.toString());
 		return res;
 	}

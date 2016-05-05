@@ -32,6 +32,7 @@ public class Initializer {
 			public void handleTweets(Status status) {
 				JSONObject obj = new JSONObject();
 				try {
+					obj.put("id", status.getId());
 					obj.put("text", status.getText());
 					obj.put("location", ((Double) status.getGeoLocation().getLatitude()).toString() + ","
 							+ ((Double) status.getGeoLocation().getLongitude()).toString());

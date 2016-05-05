@@ -18,7 +18,7 @@ public class TweetsHandler {
 		void handleTweets(Status status);
 	}
 	
-	private static boolean isRemote = true;
+	private static boolean isRemote = false;
 	
 	private final TwitterStream twitterStream;
 	
